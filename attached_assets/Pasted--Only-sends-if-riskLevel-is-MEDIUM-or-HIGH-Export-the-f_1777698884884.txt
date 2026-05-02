@@ -1,0 +1,84 @@
+- Only sends if riskLevel is "MEDIUM" or "HIGH"
+   - Export the function
+
+8. index.js (main entry point)
+   - Imports all four modules
+   - Has an async function runMonitorCycle() that:
+     1. Logs "🦞 ClawGuard cycle starting..."
+     2. Calls getNearStats() and getXrplStats() in parallel using Promise.all
+     3. Calls analyzeWithOpenClaw(nearStats, xrplStats)
+     4. Logs the full result to console
+     5. If risk is MEDIUM or HIGH: calls sendTelegramAlert() AND calls logAlertOnXrpl()
+     6. Logs "✅ Cycle complete. Next check in 30 seconds."
+   - Runs runMonitorCycle() immediately on start
+   - Then calls setInterval(runMonitorCycle, 30000) to repeat every 30 seconds
+   - Wraps everything in try/catch with helpful error messages
+
+---
+
+IMPORTANT REQUIREMENTS:
+- All code must work on Replit (Node.js 18+)
+- Use require() not import (CommonJS)
+- Handle all errors gracefully — if NEAR RPC fails, log the error and continue
+- If XRPL connection fails, log and continue
+- The OpenClaw fallback in openclawReasoner.js is critical — it ensures the demo works even before OpenClaw is fully configured
+- Add a comment at the top of every file explaining what it does
+- Add console.log statements throughout so judges can see the agent thinking in real time in the terminal
+
+---
+
+AFTER GENERATING ALL FILES, also provide:
+
+STEP-BY-STEP REPLIT DEPLOYMENT GUIDE:
+
+Step 1 — Create Replit project
+- Go to replit.com → Create Repl → Node.js → name it "clawguard"
+
+Step 2 — Add the files
+- Create each file listed above in the Replit file tree
+
+Step 3 — Set environment variables (Secrets)
+- In Replit, click the 🔒 Secrets tab (left sidebar)
+- Add each key from .env.example with real values:
+  - TELEGRAM_BOT_TOKEN: Get from @BotFather on Telegram (/newbot)
+  - TELEGRAM_CHAT_ID: Start your bot, then visit https://api.telegram.org/bot<TOKEN>/getUpdates to find your chat_id
+  - XRPL_SECRET + XRPL_ADDRESS: Get from https://xrpl.org/resources/dev-tools/xrp-faucets → Generate Keys
+  - NEAR_ACCOUNT_ID: Create free account at https://testnet.mynearwallet.com
+  - ANTHROPIC_API_KEY: Get from https://console.anthropic.com
+
+Step 4 — Install dependencies
+- In Replit Shell tab, run: npm install
+
+Step 5 — Run the project
+- Click the green Run button or in Shell: node index.js
+- You should see "🦞 ClawGuard cycle starting..." in the console
+
+Step 6 — Test Telegram alert
+- In index.js, temporarily change the risk threshold to trigger always (change "MEDIUM" check to "LOW")
+- Run again — you should get a Telegram message on your phone within seconds
+- Change it back to "MEDIUM" after testing
+
+Step 7 — Push to GitHub
+- In Replit Shell:
+  git init
+  git add .
+  git commit -m "init: ClawGuard autonomous blockchain monitor"
+  git remote add origin https://github.com/YOUR_USERNAME/clawguard.git
+  git push -u origin main
+- Make meaningful commits after each feature you add
+
+Step 8 — Keep it running on Replit
+- In Replit, go to Deployments tab → Deploy as "Autoscale" (free tier)
+- This keeps your agent running 24/7 without stopping
+
+Step 9 — Record your demo video
+- Screen record your terminal showing the agent cycling
+- Show a Telegram message arriving on your phone
+- Show the XRPL testnet explorer (testnet.xrpl.org) with your alert transaction
+- Keep it under 2 minutes
+
+Step 10 — Submit on AKINDO
+- Go to https://app.akindo.io/wave-hacks/eaKEp9dxBH8JwEErg
+- Click "Join Buildathon" then submit your project
+- Include: GitHub repo link, Replit link, demo video link
+- In submission comments write: "Participating online from India 🇮🇳 — ClawGuard is an autonomous AI risk monitor using OpenClaw for reasoning, NEAR for monitoring, and XRPL for immutable alert logging."

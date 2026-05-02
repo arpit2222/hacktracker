@@ -1,0 +1,284 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: ClawGuard - Autonomous Blockchain Risk Monitor API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: monitor
+    description: ClawGuard monitoring operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /monitor/status:
+    get:
+      operationId: getMonitorStatus
+      tags: [monitor]
+      summary: Get current monitor status
+      description: Returns the current monitoring status including risk level and cycle info
+      responses:
+        "200":
+          description: Monitor status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorStatus"
+
+  /monitor/alerts:
+    get:
+      operationId: listAlerts
+      tags: [monitor]
+      summary: List recent alerts
+      description: Returns a list of recent risk alerts
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: number
+          description: Max number of alerts to return (default 20)
+        - name: riskLevel
+          in: query
+          schema:
+            type: string
+            enum: [LOW, MEDIUM, HIGH]
+          description: Filter by risk level
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertsListResponse"
+
+  /monitor/stats:
+    get:
+      operationId: getCurrentStats
+      tags: [monitor]
+      summary: Get current blockchain stats
+      description: Returns latest NEAR and XRPL blockchain statistics
+      responses:
+        "200":
+          description: Current blockchain stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentStatsResponse"
+
+  /monitor/trigger:
+    post:
+      operationId: triggerMonitorCycle
+      tags: [monitor]
+      summary: Trigger a monitoring cycle
+      description: Manually triggers a ClawGuard monitoring cycle
+      responses:
+        "200":
+          description: Cycle result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriggerCycleResponse"
+
+  /monitor/summary:
+    get:
+      operationId: getMonitorSummary
+      tags: [monitor]
+      summary: Get monitoring summary statistics
+      description: Returns aggregated stats for the dashboard overview
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonitorSummary"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    RiskLevel:
+      type: string
+      enum: [LOW, MEDIUM, HIGH]
+
+    NearStats:
+      type: object
+      properties:
+        blockHeight:
+          type: number
+        epochId:
+          type: string
+        validators:
+          type: number
+        gasPrice:
+          type: string
+        transactionRate:
+          type: number
+        totalStake:
+          type: string
+        error:
+          type: string
+      required:
+        - blockHeight
+
+    XrplStats:
+      type: object
+      properties:
+        ledgerIndex:
+          type: number
+        baseFee:
+          type: string
+        txCount:
+          type: number
+        serverState:
+          type: string
+        loadFactor:
+          type: number
+        reserveBase:
+          type: string
+        error:
+          type: string
+      required:
+        - ledgerIndex
+
+    MonitorAlert:
+      type: object
+      properties:
+        id:
+          type: number
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        analysis:
+          type: string
+        nearBlockHeight:
+          type: number
+        xrplLedgerIndex:
+          type: number
+        xrplTxHash:
+          type: string
+        telegramSent:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - riskLevel
+        - analysis
+        - nearBlockHeight
+        - xrplLedgerIndex
+        - telegramSent
+        - createdAt
+
+    MonitorStatus:
+      type: object
+      properties:
+        isRunning:
+          type: boolean
+        lastCycleAt:
+          type: string
+          format: date-time
+        currentRiskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        currentAnalysis:
+          type: string
+        cycleCount:
+          type: number
+        alertCount:
+          type: number
+        uptimeSince:
+          type: string
+          format: date-time
+      required:
+        - isRunning
+        - cycleCount
+        - alertCount
+
+    AlertsListResponse:
+      type: object
+      properties:
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonitorAlert"
+        total:
+          type: number
+      required:
+        - alerts
+        - total
+
+    CurrentStatsResponse:
+      type: object
+      properties:
+        nearStats:
+          $ref: "#/components/schemas/NearStats"
+        xrplStats:
+          $ref: "#/components/schemas/XrplStats"
+        fetchedAt:
+          type: string
+          format: date-time
+      required:
+        - nearStats
+        - xrplStats
+        - fetchedAt
+
+    TriggerCycleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        riskLevel:
+          $ref: "#/components/schemas/RiskLevel"
+        analysis:
+          type: string
+      required:
+        - success
+        - message
+
+    MonitorSummary:
+      type: object
+      properties:
+        totalAlerts:
+          type: number
+        highRiskCount:
+          type: number
+        mediumRiskCount:
+          type: number
+        lowRiskCount:
+          type: number
+        last24hAlerts:
+          type: number
+        averageCycleIntervalMs:
+          type: number
+        lastXrplTxHash:
+          type: string
+      required:
+        - totalAlerts
+        - highRiskCount
+        - mediumRiskCount
+        - lowRiskCount
+        - last24hAlerts
